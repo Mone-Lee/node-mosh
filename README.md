@@ -42,6 +42,43 @@ Node
 ### Node 内置模块
 
 内置模块同样通过 require 引入，例如：require('path')  
-node 对 require 的参数的处理：首先判断是否为一个内置模块，否则从对应的相对路径中获取模块。 例：require('./path')，判断不是内置模块，而查找相对路径。
+node 对 require 的参数的查找顺序：
+
+1. 判断是否为一个内置模块
+2. 从对应的相对路径中获取模块。 例：require('./path')，判断不是内置模块，而查找相对路径。
+3. 从 node_modules 中查找模块。
 
 有很多内置模块其实都是基于 EventEmitter 实现的，例如：fs、net、http、stream、process 等。
+
+### NPM
+
+#### 包依赖
+
+以前，包的自身依赖都会放在包自身的 node_modules 中。这会导致同一个包多次安装，造成文件夹嵌套过深，同时 windows 限制了文件夹包含对象的数量。  
+现在，npm 会将包的依赖包都放在项目的 node_modules 中。但有例外，当不同的包对同一个包有不同版本的依赖时，仍然会在自身包里创建 node_modules 文件夹，并放置对应版本的依赖包。
+
+#### 常用命令
+
+```
+// 登录npm，发布、更新包前需要登录
+npm login
+
+// 发布包
+npm publish
+
+// 更新包， 更新包前需要改版本号，可手动改，或使用命令npm version ...，然后再publish
+
+// 更新版本号的path
+npm version patch
+
+// 更新版本号的minor
+npm version minor
+
+// 更新版本号的major
+npm version major
+
+npm publish
+
+// 删除包
+npm unpublish
+```
