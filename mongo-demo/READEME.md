@@ -89,3 +89,46 @@ const Example = mongoose.model('Example', exampleSchema);
 
 module.exports = Example;
 ```
+
+### mongoDB 不同实体（表）数据的连接方法
+
+#### 1. 使用引用，类似关系型数据库的外键
+
+关注点：数据一致性  
+弊端：查询性能消耗
+
+```
+let author = {
+  name: 'Camille'
+}
+
+let course = {
+  author: 'id' // author 的 id, 当需要获取实际的author数据时，进行查询
+}
+```
+
+#### 2. 使用嵌入式文档
+
+关注点：查询性能
+弊端：数据一致性，当 author 数据发生改变时，需要更新所有包含 author 的 course 数据
+
+```
+let course = {
+  author: {           // course中直接包含author的所有数据
+    name: 'Camille'
+  }
+}
+```
+
+#### 3. 混合模式
+
+使用场景：数据快照。例如订单需要记下下单时商品的价格
+
+```
+let course = {
+  author: {           // course中包含author的id，当需要获取实际的author数据时，进行查询。同时有一些关键信息，可以快速获取
+    id: 'id'
+    name: 'Camille',
+  }
+}
+```
