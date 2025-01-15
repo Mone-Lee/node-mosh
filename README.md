@@ -82,3 +82,86 @@ npm publish
 // 删除包
 npm unpublish
 ```
+
+## 3. JWT
+
+JSON Web Token  
+是一个渲染成长字符串的 JSON 对象，用于在客户端和服务器之间安全地传输信息。  
+JWT 是一种紧凑的、URL 安全的表示，用于在各方之间安全地通过 JSON 对象传递信息。  
+它由三部分组成：头部（header）、载荷（payload）、签名（signature）。
+
+1. header 是标准化的内容，可以忽略
+2. payload 可以存放一些自定义的信息，比如用户的 id，这样服务器获取 token 后，解析 token 即可获取信息，不用查找数据库
+3. signature 是对 payload 和秘钥（存放在服务器， 如下面的'jwtPrivateKey'）进行加密后的结果，用于验证 token 是否被篡改
+   注意：秘钥需要用环境变量存储，不要明文放在代码中。所以生成 token 需要自定义的有 payload 和秘钥
+
+```
+const token = jwt.sign({ id: this._id, isAdmin: this.isAdmin },  'jwtPrivateKey');
+```
+
+### 实际应用流程
+
+1. 用户登录，服务器验证用户名和密码，验证通过后，生成 token，返回给客户端
+
+```
+// 登录路由
+router.get('/', async (req, res) => {
+  let user = await User.findOne({ email: req.body.email });
+  if (user) return res.status(404).send('User already registered.');
+
+  user = new User({
+    name: req.body.name,
+    email: req.body.email,
+    password: req.body.password
+  });
+
+  // 加密password
+  const salt = await bcrypt.genSalt(10);
+  user.password = await bcrypt.hash(user.password, salt);
+
+  await user.save();
+
+  /**
+   * 注意： token不要存在数据库中。
+   *
+   * 万一数据库被黑，token也会被盗，那么黑客就可以用token登录你的账号
+   *
+   */
+  const token = await jwt.sign({id: user._id}, 'jwtPrivateKey');
+
+  // 将token放在响应头中，客户端获取后，存储在本地
+  res.header('x-auth-token', token).send(user);
+});
+```
+
+2. 客户端将 token 存储在本地，如 localStorage，每次请求时，将 token 放在请求头中  
+   注意：由于 token 存储在客户端，那么无需再服务器端实现登出，最好通过在客户端删除 JWT 来实现。
+3. 服务器验证 token（为通用，使用验证中间件），验证通过后，返回请求结果
+
+```
+// 验证token的中间件
+const jwt = require('jsonwebtoken');
+
+module.exports = function (req, res, next) {
+  const token = req.header('x-auth-token');
+  if (!token) return res.status(401).send('Access denied. No token provided.');
+
+  try {
+    // jwt.verify() 方法验证 token 并返回解码后的对象，即payload
+    const decode = jwt.verify(token, 'jwtPrivateKey');
+    // 将解码后的对象存放在 req.user 中，这样在后续的路由或其他中间件中，可以直接获取到用户信息，而不用去数据库查找
+    req.user = decode;
+    next();
+  }
+  catch (ex) {
+    res.status(400).send('Invalid token.');
+  }
+}
+```
+
+### 如何保证 JWT 在客户端和服务器之间传输的安全性？
+
+1. 传输时，使用 HTTPS 协议，保证数据传输的安全性
+2. 服务器端存储秘钥，客户端无法获取，即使获取了，也无法生成 token，因为秘钥是加密的
+3. token 的有效期，防止 token 被盗用后，一直有效
+4. 客户端存储：将 token 存储在客户端的 localStorage 或 sessionStorage 中，避免将 token 存储在不安全的地方（如 window 对象）。或者将 JWT 存储在 HttpOnly Cookie 中，这样可以防止 JavaScript 代码访问 Cookie，从而减少 XSS 攻击的风险。
