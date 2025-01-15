@@ -165,3 +165,31 @@ module.exports = function (req, res, next) {
 2. 服务器端存储秘钥，客户端无法获取，即使获取了，也无法生成 token，因为秘钥是加密的
 3. token 的有效期，防止 token 被盗用后，一直有效
 4. 客户端存储：将 token 存储在客户端的 localStorage 或 sessionStorage 中，避免将 token 存储在不安全的地方（如 window 对象）。或者将 JWT 存储在 HttpOnly Cookie 中，这样可以防止 JavaScript 代码访问 Cookie，从而减少 XSS 攻击的风险。
+
+## 4. 错误捕捉和处理
+
+### 1. 代码逻辑错误
+
+使用 try...catch 捕捉错误
+
+### 2. 请求错误
+
+使用错误处理中间件
+
+### 3. express 等框架外的错误
+
+process 监听事件。  
+一般捕捉错误后，需要退出程序 process.exit(1)，因为此时程序处于挂起状态，这会造成很多问题，最好重启进程回复它的状态。  
+如果是生产环境，则使用进程管理自动重启。
+
+```
+  // 捕捉同步错误
+  process.on('uncaughtException', (ex) => {
+    // 处理错误
+  })
+
+  // 捕捉异步错误
+  process.on('unhandledRejection', (ex) => {
+    // 处理错误
+  })
+```
