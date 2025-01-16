@@ -28,7 +28,7 @@ const UserSchema = new mongoose.Schema({
 
 // 在模型中封装方法
 UserSchema.methods.generateAuthToken = function() {
-  const token = jwt.sign({ id: this._id, isAdmin: this.isAdmin },  'jwtPrivateKey');
+  const token = jwt.sign({ _id: this._id, isAdmin: this.isAdmin },  'jwtPrivateKey');
   return token;
 }
 
