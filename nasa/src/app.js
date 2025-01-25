@@ -28,7 +28,7 @@ app.use(planetsRouter);
  * 
  * 注意！
  * 当我们使用客户端导航（比如react-router）时，需要注意路径匹配的顺序：
- * 假设客户端有一个导航路径/history
+ * 假设客户端有一个导航路径localhost:8000/history
  * 
  * 1. 先找public目录下是否有/history文件（即express.static的设置）
  * 
@@ -36,7 +36,6 @@ app.use(planetsRouter);
  * 
  * 3. 如果没有，则默认是接口404的状态，此时如果我们想要使用客户端导航，则需要将所有路径都重定向到index.html，即路径为 /*
  *    当导向index.html后，客户端会根据路由配置进行导航
- * 
  */
 app.get('/*', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
