@@ -85,7 +85,7 @@ npm unpublish
 
 ## 3. JWT
 
-JSON Web Token  
+<span id="jwt">JSON Web Token</span>  
 是一个渲染成长字符串的 JSON 对象，用于在客户端和服务器之间安全地传输信息。  
 JWT 是一种紧凑的、URL 安全的表示，用于在各方之间安全地通过 JSON 对象传递信息。  
 它由三部分组成：头部（header）、载荷（payload）、签名（signature）。
@@ -160,6 +160,8 @@ module.exports = function (req, res, next) {
 ```
 
 ### 如何保证 JWT 在客户端和服务器之间传输的安全性？
+
+JWT 的一个特性是，它不可被篡改（通过自身包含的 signature 来校验，只有拥有 signature 中的 secret 的服务器才能够创建新的有效的 token 并修改 payload），但它可被任何人解码从而查看里面的详细信息，即它不是加密的。
 
 1. 传输时，使用 HTTPS 协议，保证数据传输的安全性
 2. 服务器端存储秘钥，客户端无法获取，即使获取了，也无法生成 token，因为秘钥是加密的
@@ -328,3 +330,20 @@ https.createServer(options, (req, res) => {
 //   console.log('HTTPS server running on port 3000');
 // });
 ```
+
+## 10. 认证和授权
+
+### api key
+
+api key 是一个字符串。api key 的 2 个作用：
+
+1. 识别用户身份  
+   有时我们查看网站的源代码，会发现代码中**明文**写着 api key。这是因为这个 api key 仅用来表示是哪个 app 或项目在调用 api 或者 sdk。
+2. 限制某个身份对 api 的调用
+   有时我们希望限制某个身份对 api 的调用，比如限制某个 app 或项目对 api 的调用次数。这时，我们可以使用 api key 来实现。  
+   api key 的实现方式是，在每次调用 api 时，将 api key 作为参数（query 或者请求头）传递给 api。api 在接收到请求后，会检查 api key 是否有效，如果无效，则拒绝请求。
+
+### JWT
+
+JWT 同 api key 一样，都用于唯一地识别一个 app 的特定用户。但 JWT 更多的是作为用户的凭证，表示该用户是否有权限访问某个 api。同时，由于 JWT 结构的特殊性，它的 payload 可以携带更多信息。  
+[更多信息](#jwt)
