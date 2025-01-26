@@ -21,7 +21,7 @@ const courseSchema = new mongoose.Schema({
   isPublished: Boolean
 })
 
-// 通过model，将schema转成一个类
+// 通过model，将schema转成一个类。 通过model，将schema与collection关联，从而操作mongoDB
 const Course = mongoose.model('Course', courseSchema);  // 其中参数Course是connection（类似表）的单数形式
 
 

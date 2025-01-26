@@ -289,3 +289,42 @@ node 的主要运行机制，是将接受到的任务通过 event loop 抛给线
 2. worker threads  
    worker threads 是 Node.js 10.5.0 版本引入的一个新特性，它允许我们在一个进程中创建多个线程，从而实现多线程并行计算。内部是基于 web worker。worker threads 的使用方式和 cluster 模块类似，但是 worker threads 是在同一个进程内创建的，所以它们可以共享内存，从而实现更高效的并行计算。  
    worker threads 的使用场景是，当我们的代码中有一些计算密集型的任务，而这些任务不需要访问外部资源，如数据库、网络请求等（这些更适合由 cluster 来进行优化），那么我们可以使用 worker threads 来实现多线程并行计算，从而提高性能。
+
+## 9. https 安全
+
+node 中实现 https，需要使用内建的 https 模块。这允许我们实现 self-signed certificate，即自签名证书(另一种证书则是 CA 证书)。
+
+### 使用 openSSL 生成自签名的证书
+
+```
+// req 表示要求一个新的证书
+// -x509 表示这是一个自签名证书
+// -newkey rsa:4096 表示生成一个新的 RSA 密钥，长度为 4096 位(越长则密码越强，一般为4096)
+// -nodes 表示不使用密码保护证书（由于我们只在开发环境使用这个自签名证书，为免增加输入量，则设为不需要密码）
+// -keyout server.key 表示将私钥保存到 server.key 文件中
+// -out server.cert 表示将证书保存到 server.cert 文件中 （证书是公开的，浏览器通过证书来检查服务器的所有权）
+// -days 365 表示证书的有效期为 365 天
+
+openssl req -nodes -x509 -newkey rsa:4096 -nodes -keyout server.key -out server.cert -days 365
+```
+
+### 使用 https 模块创建实例，并引入秘钥和证书
+
+```js
+const https = require("https");
+const fs = require("fs");
+
+const options = {
+  key: fs.readFileSync("./server.key"), // 注意需要使用fs读取对应的文件内容，而不是传入文件路径
+  cert: fs.readFileSync("./server.cert"),
+};
+
+https.createServer(options, (req, res) => {
+  res.writeHead(200);
+});
+// 如果我们在上面使用express实例做了一些东西，则createServer的回调函数中，可以传入express实例
+// https.createServer(options, app)
+// .listen(3000, () => {
+//   console.log('HTTPS server running on port 3000');
+// });
+```
