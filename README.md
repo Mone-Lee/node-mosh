@@ -357,3 +357,53 @@ JWT 同 api key 一样，都用于唯一地识别一个 app 的特定用户。�
 1. 安全性高，因为 oauth 授权码是 google 生成并返回的，只有 google 才能解密。
 2. 可以限制第三方应用获取用户的哪些信息，比如只获取用户的邮箱地址，不获取用户的密码。
 3. 用户需要记住的账号密码更少。
+
+
+## 11. Buffer
+1. Buffer 是一个全局对象，不需要 require
+2. 是一片内存空间，用来存储二进制数据
+3. 这个内存空间独立于v8的堆内存。但仍然由 node 进行管理和 gc
+4. Buffer 一般与 stream 一起使用，当数据消费速度小于数据生产速度时，就需要 buffer 存储产生的数据
+
+### Buffer 实例的创建
+
+Buffer 在 Node 中是一个类，但一般不适用 new 直接创建实例，因为这种创建方式给了实例太多的权限，不安全。
+1. Buffer.alloc(size)
+2. Buffer.allocUnsafe(size)
+这2个方法都是创建一个固定大小的 buffer 空间，不同的是，Buffer.allocUnsafe(size) 创建的 buffer 空间可能包含旧数据（使用了一些还未 gc 的碎片空间）。  
+
+3. Buffer.from(array)
+从已有数据创建一个 buffer 空间。
+参数类型有3种：
+```
+// 数字、字符串
+const b1 = Buffer.from(1);
+const b2 = Buffer.from("hello");
+
+// 数组
+const b3 = Buffer.from([1, 2, 3]);  // 注意，当使用数组作为参数时，尽量使用数字数组，使用字符串会导致结果不可预期
+
+// buffer 实例
+const b4 = Buffer.from(b3);   // b4与b3的内存大小一样，但是并不共用内存，修改b3，b4不会改变
+```
+
+### Buffer 的 split 方法
+常用，但是没有原生实现
+```
+Buffer.prototype.split = function (sep) {
+  let start = 0;
+  let offset = 0;
+  let len = Buffer.from(sep).length;    // 由于buffer里是字节长度，需要计算分隔符的长度
+  let ret = [];
+
+  while(offset = this.indexOf(sep, start) !== -1) {
+    ret.push(this.slice(start, offset));
+    start = offset + len;
+  }
+  ret.push(this.slice(start));
+  return ret;
+}
+
+let bf = Buffer.from("hello world");
+bf.split(" ");
+```
