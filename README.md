@@ -435,3 +435,16 @@ Buffer.prototype.split = function (sep) {
 let bf = Buffer.from("hello world");
 bf.split(" ");
 ```
+
+## 12. Stream
+
+### 优点
+
+1. 时间效率：流的分段处理可以同时处理多个 chunk，无需等待前一步完整处理数据再进行下一步
+2. 空间效率：同一时间流无需占用大数据内存
+3. 方便扩展：流配合管道，扩展方便，只需关注当前段的输入输出
+
+### 特点
+
+1. 流有 4 种分类：Readable、Writable、Duplex、Transform，需要注意的是这些都是类(class)，但一般实际使用不会自己去实现这 4 种类的实例，因为常用的 io 方法比如 fs 和 http 内部已经继承 Stream，可以直接使用。
+2. 流继承了 EventEmitter，所以流可以监听事件，比如 data、end、error 等
