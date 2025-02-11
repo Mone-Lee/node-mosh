@@ -448,3 +448,55 @@ bf.split(" ");
 
 1. 流有 4 种分类：Readable、Writable、Duplex、Transform，需要注意的是这些都是类(class)，但一般实际使用不会自己去实现这 4 种类的实例，因为常用的 io 方法比如 fs 和 http 内部已经继承 Stream，可以直接使用。
 2. 流继承了 EventEmitter，所以流可以监听事件，比如 data、end、error 等
+
+## 13. Net 网络
+
+### TCP 数据粘包问题
+
+原因：TCP 并不是立即发送或处理数据，而是先放入缓冲区，等到缓冲区满了再发送，或者等到缓冲区为空时再接收数据。  
+解决方法：
+
+1. 使用延时分开每次发送的数据
+
+   - 弊端：延时会导致数据发送不及时，影响性能
+
+2. 实现数据封包拆包
+
+   - 关键：实现包 header，header 里包含**数据长度**，接收方根据 header 进行拆包
+
+   拆包函数
+
+   ```
+    function unpack(buffer) {
+      const packages = [];
+      let offset = 0;
+
+      while (offset < buffer.length) {
+        if (buffer.length - offset < 4) {
+          break; // 不足以读取包头
+        }
+
+        const length = buffer.readUInt32BE(offset);
+        if (buffer.length - offset - 4 < length) {
+          break; // 不足以读取完整的数据包
+        }
+
+        const data = buffer.slice(offset + 4, offset + 4 + length);   // 根据包头里的数据长度截取数据
+        packages.push(data);
+        offset += 4 + length;
+      }
+
+      return { packages, remaining: buffer.slice(offset) };
+    }
+   ```
+
+   实际调用
+
+   ```
+    let buffer = Buffer.alloc(0);
+    socket.on('data', (data) => {
+      buffer = Buffer.concat([buffer, data]);
+      const { packages, remaining } = unpack(buffer);  // 拆包
+      buffer = remaining;
+    });
+   ```
